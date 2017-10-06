@@ -71,9 +71,14 @@ function stop_service {
 # Opther Functions
 # ================
 
-function recreate_database {
+function delete_database {
     local db=$1
     mysql -u$DATABASE_USER -p$DATABASE_PASSWORD -h$DATABASE_HOST -e "DROP DATABASE IF EXISTS $db;"
+}
+
+function recreate_database {
+    local db=$1
+    delete_database $db
     mysql -u$DATABASE_USER -p$DATABASE_PASSWORD -h$DATABASE_HOST -e "CREATE DATABASE $db CHARACTER SET utf8;"
 }
 
