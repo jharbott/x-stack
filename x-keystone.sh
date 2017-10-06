@@ -58,33 +58,62 @@ function bootstrap_keystone {
     # Create additional domains, projects, users and roles
     # This closely follows DevStack's create_keystone_accounts()
     # TODO: write clouds.yaml dynamically
+    # The keystone bootstrapping process (performed via keystone-manage bootstrap)
+    # creates an admin user, admin role and admin project. As a sanity check
+    # we exercise the CLI to retrieve the IDs for these values.
+    local admin_project="admin"
+    # admin_project=$(openstack project show "admin" -f value -c id)
+    local admin_user="admin"
+    # admin_user=$(openstack user show "admin" -f value -c id)
+    local admin_role="admin"
+    # The Member role is used by Horizon and Swift so we need to keep it:
+    local member_role="member"
+    # Capital Member role is legacy hard coded in Horizon / Swift
+    # configs. Keep it around.
+    local cap_member_role="Member"
+    # another_role demonstrates that an arbitrary role may be created and used
+    # TODO(sleepsonthefloor): show how this can be used for rbac in the future!
+    local another_role="anotherrole"
+    # invisible project - admin can't see this one
+    local invis_project="invisible_to_admin"
+    # demo
+    local demo_project="demo"
+    local demo_user="demo"
+    # alt_demo
+    local alt_demo_project="alt_demo"
+    local alt_demo_user="alt-demo"
+    # groups
+    local admin_group="admins"
+    local non_admin_group="nonadmins"
+
     openstack --os-cloud xstack-admin <<EOF
+        role add --project default --user $admin_user $admin_role
         domain create --or-show $SERVICE_DOMAIN_NAME
         project create --or-show --domain $SERVICE_DOMAIN_NAME $SERVICE_PROJECT_NAME
         role create --or-show service
         role create --or-show ResellerAdmin
-        role create --or-show Member
-        role create --or-show member
-        role create --or-show anotherrole
-        project create --or-show --domain default invisible_to_admin
-        project create --or-show --domain default demo
-        user create --or-show --domain default --email=demo@example.com --password secretadmin demo
-        role add --project demo --user demo member
-        role add --project demo --user admin admin
-        role add --project demo --user demo anotherrole
-        role add --project invisible_to_admin --user demo member
-        project create --or-show --domain default alt_demo
-        user create --or-show --domain default --email=alt_demo@example.com --password secretadmin alt_demo
-        role add --project alt_demo --user alt_demo member
-        role add --project alt_demo --user admin admin
-        role add --project alt_demo --user alt_demo anotherrole
-        group create --or-show --domain default --description 'openstack admin group' admins
-        group create --or-show --domain default --description 'non-admin group' nonadmins
-        role add --project demo --group nonadmins member
-        role add --project demo --group nonadmins anotherrole
-        role add --project alt_demo --group nonadmins member
-        role add --project alt_demo --group nonadmins anotherrole
-        role add --project admin --group admins admin
+        role create --or-show $cap_member_role
+        role create --or-show $member_role
+        role create --or-show $another_role
+        project create --or-show --domain default $invis_project
+        project create --or-show --domain default $demo_project
+        user create --or-show --domain default --email=demo@example.com --password "$ADMIN_PASSWORD" $demo_user
+        role add --project $demo_project --user $demo_user $member_role
+        role add --project $demo_project --user $admin_user $admin_role
+        role add --project $demo_project --user $demo_user $another_role
+        role add --project $invis_project --user $demo_user $member_role
+        project create --or-show --domain default $alt_demo_project
+        user create --or-show --domain default --email=alt_demo@example.com --password "$ADMIN_PASSWORD" $alt_demo_user
+        role add --project $alt_demo_project --user $alt_demo_user $member_role
+        role add --project $alt_demo_project --user $admin_user $admin_role
+        role add --project $alt_demo_project --user $alt_demo_user $another_role
+        group create --or-show --domain default --description 'openstack admin group' $admin_group
+        group create --or-show --domain default --description 'non-admin group' $non_admin_group
+        role add --project $demo_project --group $non_admin_group $member_role
+        role add --project $demo_project --group $non_admin_group $another_role
+        role add --project $alt_demo_project --group $non_admin_group $member_role
+        role add --project $alt_demo_project --group $non_admin_group $another_role
+        role add --project $admin_project --group $admin_group $admin_role
 EOF
 }
 
@@ -111,6 +140,18 @@ function configure_keystone {
     iniset $KEYSTONE_CONF DEFAULT logging_exception_prefix "%(asctime)s.%(msecs)03d %(process)d TRACE %(name)s %(instance)s"
 
 	_config_keystone_apache_wsgi
+}
+
+function create_service_user {
+    local cmd=""
+    if [[ -n "$2" ]]; then
+        cmd="role add --project-domain $SERVICE_DOMAIN_NAME --project $SERVICE_PROJECT_NAME --user-domain $SERVICE_DOMAIN_NAME --user $1 $2"
+    fi
+    openstack --os-cloud xstack-admin <<EOF
+        user create --or-show --domain "$SERVICE_DOMAIN_NAME" --password "$SERVICE_PASSWORD" $1
+        role add --project-domain "$SERVICE_DOMAIN_NAME" --project "$SERVICE_PROJECT_NAME" --user-domain "$SERVICE_DOMAIN_NAME" --user $1 service
+        $cmd
+EOF
 }
 
 function init_keystone {
