@@ -56,12 +56,35 @@ function bootstrap_keystone {
         --bootstrap-public-url "$KEYSTONE_SERVICE_URI"
 
     # Create additional domains, projects, users and roles
+    # This closely follows DevStack's create_keystone_accounts()
     # TODO: write clouds.yaml dynamically
     openstack --os-cloud xstack-admin <<EOF
         domain create --or-show $SERVICE_DOMAIN_NAME
         project create --or-show --domain $SERVICE_DOMAIN_NAME $SERVICE_PROJECT_NAME
         role create --or-show service
         role create --or-show ResellerAdmin
+        role create --or-show Member
+        role create --or-show member
+        role create --or-show anotherrole
+        project create --or-show --domain default invisible_to_admin
+        project create --or-show --domain default demo
+        user create --or-show --domain default --email=demo@example.com --password secretadmin demo
+        role add --project demo --user demo member
+        role add --project demo --user admin admin
+        role add --project demo --user demo anotherrole
+        role add --project invisible_to_admin --user demo member
+        project create --or-show --domain default alt_demo
+        user create --or-show --domain default --email=alt_demo@example.com --password secretadmin alt_demo
+        role add --project alt_demo --user alt_demo member
+        role add --project alt_demo --user admin admin
+        role add --project alt_demo --user alt_demo anotherrole
+        group create --or-show --domain default --description 'openstack admin group' admins
+        group create --or-show --domain default --description 'non-admin group' nonadmins
+        role add --project demo --group nonadmins member
+        role add --project demo --group nonadmins anotherrole
+        role add --project alt_demo --group nonadmins member
+        role add --project alt_demo --group nonadmins anotherrole
+        role add --project admin --group admins admin
 EOF
 }
 
