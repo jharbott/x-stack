@@ -1,6 +1,8 @@
 #!/bin/bash
 # x-mysql
 
+set -e
+
 source x-stackrc
 
 # Keep a copy here for stand-alone use
@@ -81,6 +83,19 @@ EOF
 #    mysql -u$DATABASE_USER -p$DATABASE_PASSWORD -h$DATABASE_HOST -e "CREATE DATABASE $db CHARACTER SET utf8;"
 #}
 
-install_database
-configure_database
+ACTION=${1:-none}
+case $ACTION in
+    stack)
+        install_database
+        configure_database
+        ;;
+    unstack)
+        stop_service mysql
+        ;;
+    clean)
+        stop_service mysql
+        cleanup_database
+        ;;
+esac
 
+echo "$0 Fini"

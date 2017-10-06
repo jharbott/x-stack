@@ -1,6 +1,8 @@
 #!/bin/bash
 # x-rabbit
 
+set -e
+
 source x-stackrc
 
 # Keep a copy here for stand-alone use
@@ -77,6 +79,20 @@ function restart_rabbitmq {
     done
 }
 
-install_rabbitmq
-restart_rabbitmq
 
+ACTION=${1:-none}
+case $ACTION in
+    stack)
+        install_rabbitmq
+        restart_rabbitmq
+        ;;
+    unstack)
+        stop_service rabbitmq-server
+        ;;
+    clean)
+        stop_service rabbitmq-server
+        cleanup_rabbitmq
+        ;;
+esac
+
+echo "$0 Fini"
