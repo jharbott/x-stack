@@ -26,3 +26,28 @@ Specifically, X-Stack borrows a number of the support functions from DevStack's
 
 At this time, running X-Stack is a matter of running the individual x-*.sh scripts.
 We are still in the 'creating the building blocks' phase.
+
+All of the scripts support both running as stand-alone commands and being sourced for
+inclusion in a master script (in the future, like ``stack.sh`` on a diet).  The
+following commands are defines, not all scripts implement them all:
+
+* stack - similar to what you might expect from DevStack, builds a fresh install
+  and initializes databases
+* start - what so many wanted from DevStack for so long, just start the
+  already-configured services
+* stop - shut down the services
+* clean - shut down services and remove (some) things left behind; this also deletes
+  the databases
+
+So You Wanna Try It?
+====================
+
+In a fresh Ubuntu 16.04 VM, do this:
+
+	sudo ./x-mysql.sh stack
+
+	sudo ./x-rabbitmq.sh stack
+
+	sudo ./x-clients.sh stack
+
+	sudo ./x-keystone.sh stack
