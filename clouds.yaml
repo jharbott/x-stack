@@ -1,0 +1,7 @@
+clouds:
+  xstack-admin:
+    auth:
+      username: admin
+      password: 0penstack
+      project_name: admin
+      auth_url: http://localhost/identity
