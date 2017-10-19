@@ -11,6 +11,9 @@ source lib.inc
 CLIENTS_PACKAGES=python-openstackclient
 
 function install_clients {
+	sudo add-apt-repository cloud-archive:newton
+	sudo apt update
+	sudo apt dist-upgrade
 	install_package $CLIENTS_PACKAGES
 }
 

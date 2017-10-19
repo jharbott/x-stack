@@ -174,6 +174,8 @@ function install_keystone {
 }
 
 function start_keystone {
+    sudo systemctl stop keystone.service
+    sudo systemctl disable keystone.service
     sudo a2enmod wsgi
     sudo a2ensite keystone
     restart_service apache2
@@ -191,6 +193,9 @@ case $ACTION in
         configure_keystone
         init_keystone
         start_keystone
+        bootstrap_keystone
+        ;;
+    boot)
         bootstrap_keystone
         ;;
     start)
